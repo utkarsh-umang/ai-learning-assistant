@@ -10,4 +10,6 @@ services:
       # containers on macOS can reach it via host.docker.internal.
       # You can also set this in .env instead.
       LANGFUSE_HOST: ${LANGFUSE_HOST:-http://host.docker.internal:3001}
+    volumes:
+      - ./conversations:/app/conversations
 
