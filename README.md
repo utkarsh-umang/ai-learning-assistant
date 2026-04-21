@@ -198,7 +198,26 @@ The demo assumes **`S123`** as in the assignment sample.
 
 ## Screenshots
 
+Below are captures from the running app and from optional **Langfuse** tracing. They illustrate **different tool invocations**, **observability**, and **multi-turn context** (including resolving pronouns like “it” using persisted conversation history).
 
-```markdown
-![Chat UI](docs/screenshots/chat.png)
-```
+### Tool calling (three tools)
+
+The model chooses tools depending on the question: weak topics and scores, tests in a date window, or study materials for a named topic.
+
+| `get_weak_topics` | `get_upcoming_tests` | `recommend_study_material` |
+|-------------------|----------------------|----------------------------|
+| ![Tool call: get_weak_topics](docs/screenshots/tool_call_weak_topics.png) | ![Tool call: get_upcoming_tests](docs/screenshots/tool_call_upcoming_test.png) | ![Tool call: recommend_study_material](docs/screenshots/tool_call_study_material.png) |
+
+### Observability (Langfuse)
+
+With `LANGFUSE_*` configured, traces show the agent loop (LLM steps, tool calls, and latency), which helps debug behavior and demonstrate correctness in review.
+
+![Langfuse trace: observability](docs/screenshots/langfuse_observability.png)
+
+### Conversation history (coreference: “it”)
+
+The API reloads recent turns from disk and passes them into the graph before each reply. In a follow-up that only says **“it”**, the assistant can still infer the referent (e.g. the topic or test from the prior turn) instead of answering generically.
+
+| First turn + follow-up with “it” | Assistant uses prior context |
+|----------------------------------|------------------------------|
+| ![Conversation: context for “it”](docs/screenshots/conversation_history.png) | ![Conversation: resolved referent](docs/screenshots/conversation_history_2.png) |

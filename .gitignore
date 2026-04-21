@@ -10,3 +10,4 @@ __pycache__/
 *.pyzwz
 .env
 conversations/
+.DS_Store

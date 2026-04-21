@@ -15,9 +15,15 @@ load_dotenv()
 
 def build_llm(model: str | None = None) -> ChatOpenAI:
     chosen_model = model or os.getenv("OPENAI_MODEL") or "gpt-4o-mini"
+    max_tokens_raw = os.getenv("OPENAI_MAX_TOKENS", "380")
+    try:
+        max_tokens = int(max_tokens_raw)
+    except ValueError:
+        max_tokens = 380
     return ChatOpenAI(
         model=chosen_model,
         temperature=0.2,
+        max_tokens=max_tokens,
     )
 
 def _sanitize_messages_for_tool_calling(messages: List[Any]) -> List[Any]:
