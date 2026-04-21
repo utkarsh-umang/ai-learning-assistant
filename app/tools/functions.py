@@ -33,7 +33,7 @@ def get_weak_topics(student_id: str) -> Dict[str, Any]:
 
 
 def get_upcoming_tests(
-    student_id: str, reference_date: str | None = None, days_ahead: int = 7
+    student_id: str, reference_date: str | date | None = None, days_ahead: int = 7
 ) -> Dict[str, Any]:
     data = load_data()
     tests_doc = data.upcoming_tests
@@ -47,7 +47,14 @@ def get_upcoming_tests(
         }
 
     if reference_date:
-        ref = datetime.fromisoformat(reference_date).date()
+        if isinstance(reference_date, date) and not isinstance(reference_date, datetime):
+            ref = reference_date
+        else:
+            # Accept either an ISO string or a datetime (which also supports .date()).
+            if isinstance(reference_date, datetime):
+                ref = reference_date.date()
+            else:
+                ref = datetime.fromisoformat(str(reference_date)).date()
     else:
         ref = date.today()
 

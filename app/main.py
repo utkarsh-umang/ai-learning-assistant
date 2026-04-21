@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import traceback
 
 from fastapi import FastAPI
 from fastapi.responses import FileResponse
@@ -41,6 +42,8 @@ def chat(req: ChatRequest) -> ChatResponse:
         answer = run_agent(req.message, student_id="S123")
         return ChatResponse(response=answer)
     except Exception as e:
-        return ChatResponse(
-            response=f"Server error: {type(e).__name__}: {e}. Set OPENAI_API_KEY in .env and restart."
-        )
+        # Ensure we can debug failures via container logs / traces.
+        print(traceback.format_exc())
+        if isinstance(e, RuntimeError) and "OPENAI_API_KEY" in str(e):
+            return ChatResponse(response=f"Server error: {type(e).__name__}: {e}. Set OPENAI_API_KEY in .env and restart.")
+        return ChatResponse(response=f"Server error: {type(e).__name__}: {e}.")

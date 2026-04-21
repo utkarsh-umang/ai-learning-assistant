@@ -7,18 +7,13 @@ from typing import Any, Dict
 
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage
 from langgraph.graph import END, StateGraph
-from langgraph.graph.message import MessagesState, add_messages
+from langgraph.graph.message import MessagesState
 from langgraph.prebuilt import ToolNode, tools_condition
 
 from app.llm import build_llm, llm_invoke
+from app.observability.langfuse import langfuse_callbacks
 from app.prompts import SYSTEM_PROMPT, context_prompt
 from app.tools import TOOLS
-
-
-class AssistantState(MessagesState):
-    # MessagesState already provides `messages: list`
-    # add_messages reducer ensures appends
-    messages: Any = add_messages
 
 
 def build_graph() -> Any:
@@ -31,7 +26,8 @@ def build_graph() -> Any:
         result = llm_invoke(llm, messages)
         return {"messages": [result]}
 
-    graph = StateGraph(AssistantState)
+    # Use the built-in MessagesState which already has the correct reducer for `messages`.
+    graph = StateGraph(MessagesState)
     graph.add_node("assistant", assistant_node)
     graph.add_node("tools", tool_node)
 
@@ -62,7 +58,12 @@ def run_agent(user_message: str, *, today: str | None = None, student_id: str = 
     if not os.getenv("OPENAI_API_KEY"):
         raise RuntimeError("Missing OPENAI_API_KEY in environment.")
     state = initial_state(user_message, today=today, student_id=student_id)
-    final = get_graph().invoke(state, config={"recursion_limit": 6})
+    callbacks = langfuse_callbacks()
+    config: Dict[str, Any] = {"recursion_limit": 6}
+    if callbacks:
+        # Attach callbacks at the graph level so tool executions are traced too.
+        config["callbacks"] = callbacks
+    final = get_graph().invoke(state, config=config)
 
     # Find the last AI message content.
     last_ai = None
