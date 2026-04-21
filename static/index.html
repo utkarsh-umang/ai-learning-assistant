@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Student Learning Assistant</title>
+    <style>
+      :root { color-scheme: light; }
+      body { font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; margin: 0; background: #f6f7fb; }
+      .wrap { max-width: 860px; margin: 0 auto; padding: 20px; }
+      .card { background: #fff; border: 1px solid #e6e8f0; border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.04); }
+      .header { padding: 14px 16px; border-bottom: 1px solid #eef0f6; display: flex; align-items: center; justify-content: space-between; }
+      .title { font-weight: 650; }
+      .sub { color: #5a6073; font-size: 13px; }
+      .thread { padding: 16px; min-height: 420px; max-height: 520px; overflow: auto; }
+      .msg { margin: 10px 0; display: flex; }
+      .msg.user { justify-content: flex-end; }
+      .bubble { max-width: 78%; padding: 10px 12px; border-radius: 12px; white-space: pre-wrap; line-height: 1.35; }
+      .user .bubble { background: #1f6feb; color: white; border-top-right-radius: 4px; }
+      .bot .bubble { background: #f1f3f8; color: #111827; border-top-left-radius: 4px; }
+      .composer { padding: 12px; border-top: 1px solid #eef0f6; display: flex; gap: 10px; }
+      input { flex: 1; padding: 10px 12px; border: 1px solid #d7dced; border-radius: 10px; font-size: 14px; }
+      button { padding: 10px 14px; border: 0; border-radius: 10px; background: #111827; color: #fff; font-weight: 600; cursor: pointer; }
+      button:disabled { opacity: 0.5; cursor: not-allowed; }
+      .hint { padding: 10px 16px; color: #5a6073; font-size: 13px; }
+      .chips { display: flex; gap: 8px; flex-wrap: wrap; padding: 0 16px 14px; }
+      .chip { border: 1px solid #e6e8f0; background: #fff; border-radius: 999px; padding: 8px 10px; font-size: 13px; cursor: pointer; }
+      .chip:hover { background: #fafbff; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <div class="card">
+        <div class="header">
+          <div>
+            <div class="title">Student Learning Assistant</div>
+            <div class="sub">Ask what to study next. Tools are called server-side.</div>
+          </div>
+        </div>
+        <div class="hint">Try one of these:</div>
+        <div class="chips">
+          <div class="chip" data-q="I am weak in Algebra. What should I do next?">Weak in Algebra</div>
+          <div class="chip" data-q="What should I study this week?">Study this week</div>
+          <div class="chip" data-q="I have a Maths test coming up. Help me prepare.">Maths test prep</div>
+        </div>
+        <div id="thread" class="thread"></div>
+        <div class="composer">
+          <input id="msg" placeholder="Type your question…" />
+          <button id="send">Send</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const thread = document.getElementById("thread");
+      const input = document.getElementById("msg");
+      const sendBtn = document.getElementById("send");
+
+      function addMessage(role, text) {
+        const row = document.createElement("div");
+        row.className = `msg ${role}`;
+        const bubble = document.createElement("div");
+        bubble.className = "bubble";
+        bubble.textContent = text;
+        row.appendChild(bubble);
+        thread.appendChild(row);
+        thread.scrollTop = thread.scrollHeight;
+      }
+
+      async function sendMessage(text) {
+        addMessage("user", text);
+        sendBtn.disabled = true;
+        input.disabled = true;
+        try {
+          const res = await fetch("/chat", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ message: text }),
+          });
+          const data = await res.json();
+          addMessage("bot", data.response || "(no response)");
+        } catch (e) {
+          addMessage("bot", "Error calling /chat. Check server logs.");
+        } finally {
+          sendBtn.disabled = false;
+          input.disabled = false;
+          input.value = "";
+          input.focus();
+        }
+      }
+
+      sendBtn.addEventListener("click", () => {
+        const text = input.value.trim();
+        if (!text) return;
+        sendMessage(text);
+      });
+
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") sendBtn.click();
+      });
+
+      document.querySelectorAll(".chip").forEach((c) => {
+        c.addEventListener("click", () => sendMessage(c.getAttribute("data-q")));
+      });
+
+      addMessage("bot", "Hi Arjun — ask me what to study next.");
+    </script>
+  </body>
+</html>
+
