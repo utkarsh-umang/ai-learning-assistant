@@ -1,0 +1,13 @@
+services:
+  student-assistant:
+    build: .
+    ports:
+      - "8001:8080"
+    env_file:
+      - .env
+    environment:
+      # Optional: if Langfuse is running on your host machine (e.g. compose stack on localhost:3001),
+      # containers on macOS can reach it via host.docker.internal.
+      # You can also set this in .env instead.
+      LANGFUSE_HOST: ${LANGFUSE_HOST:-http://host.docker.internal:3001}
+

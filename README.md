@@ -11,7 +11,6 @@ An AI assistant that helps a student understand what to study next using:
 ### 1) Install
 
 ```bash
-cd student-assistant
 python -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
@@ -19,7 +18,7 @@ pip install -r requirements.txt
 
 ### 2) Configure environment
 
-Create `student-assistant/.env`:
+Create `.env`:
 
 ```bash
 OPENAI_API_KEY=...
@@ -56,7 +55,7 @@ Response:
 
 ## Data
 
-The sample dataset lives in `student-assistant/data/`.
+The sample dataset lives in `data/`.
 
 For now the app uses a single hardcoded student: `S123`.
 
@@ -76,3 +75,36 @@ For now the app uses a single hardcoded student: `S123`.
 - Topic matching is exact-string; can be improved with embeddings + fuzzy matching.
 - No per-user auth / multi-student routing yet.
 - Basic UI only.
+
+## Docker (local)
+
+```bash
+docker compose up --build
+```
+
+Then open `http://localhost:8001/`.
+
+If you're running Langfuse locally at `http://localhost:3001`, set:
+
+```bash
+LANGFUSE_HOST=http://host.docker.internal:3001
+```
+
+in `.env` (recommended) or via your shell.
+
+## Cloud Run (deploy)
+
+- The container listens on `$PORT` and `0.0.0.0` (Cloud Run requirement).
+- Configure secrets/environment variables in Cloud Run:
+  - `OPENAI_API_KEY`
+  - Optional: `LANGFUSE_*` values
+
+Example deploy flow (one of many):
+
+```bash
+gcloud run deploy student-assistant \
+  --source . \
+  --region us-central1 \
+  --allow-unauthenticated \
+  --set-env-vars OPENAI_MODEL=gpt-4o-mini
+```

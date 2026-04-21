@@ -30,6 +30,10 @@ app.mount("/static", StaticFiles(directory=str(STATIC_DIR)), name="static")
 def index() -> FileResponse:
     return FileResponse(str(STATIC_DIR / "index.html"))
 
+@app.get("/healthz")
+def healthz() -> dict:
+    return {"ok": True}
+
 
 @app.post("/chat", response_model=ChatResponse)
 def chat(req: ChatRequest) -> ChatResponse:
@@ -38,5 +42,5 @@ def chat(req: ChatRequest) -> ChatResponse:
         return ChatResponse(response=answer)
     except Exception as e:
         return ChatResponse(
-            response=f"Server error: {type(e).__name__}: {e}. Set OPENAI_API_KEY in student-assistant/.env and restart."
+            response=f"Server error: {type(e).__name__}: {e}. Set OPENAI_API_KEY in .env and restart."
         )
